@@ -1,0 +1,111 @@
+From 6529e4d6c6a0b3a11775299d9838a46ee16c92a8 Mon Sep 17 00:00:00 2001
+From: md_5 <md_5@live.com.au>
+Date: Sun, 2 Jun 2013 15:20:49 +1000
+Subject: [PATCH] BungeeCord Support
+
+
+diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
+index 5c5d526..724f601 100644
+--- a/src/main/java/org/bukkit/entity/Player.java
++++ b/src/main/java/org/bukkit/entity/Player.java
+@@ -647,7 +647,6 @@ public interface Player extends HumanEntity, Conversable, CommandSender, Offline
+      *     yet or has logged out
+      */
+     public void setScoreboard(Scoreboard scoreboard) throws IllegalArgumentException, IllegalStateException;
+-
+     /**
+      * Gets if the client is displayed a 'scaled' health, that is, health on a
+      * scale from 0-20.
+@@ -667,4 +666,23 @@ public interface Player extends HumanEntity, Conversable, CommandSender, Offline
+      * @param scale if the client health display is scaled
+      */
+     public void setScaleHealth(boolean scale);
++
++    // Spigot start
++    public class Spigot
++    {
++
++        /**
++         * Gets the connection address of this player, regardless of whether it
++         * has been spoofed or not.
++         *
++         * @return the player's connection address
++         */
++        public InetSocketAddress getRawAddress()
++        {
++            throw new UnsupportedOperationException( "Not supported yet." );
++        }
++    }
++
++    Spigot spigot();
++    // Spigot end
+ }
+diff --git a/src/main/java/org/bukkit/event/player/PlayerLoginEvent.java b/src/main/java/org/bukkit/event/player/PlayerLoginEvent.java
+index 60c0875..dab3c5c 100644
+--- a/src/main/java/org/bukkit/event/player/PlayerLoginEvent.java
++++ b/src/main/java/org/bukkit/event/player/PlayerLoginEvent.java
+@@ -14,6 +14,7 @@ public class PlayerLoginEvent extends PlayerEvent {
+     private final String hostname;
+     private Result result = Result.ALLOWED;
+     private String message = "";
++    private final InetAddress realAddress; // Spigot
+ 
+     /**
+      * @deprecated Address should be provided in other constructor
+@@ -38,10 +39,17 @@ public class PlayerLoginEvent extends PlayerEvent {
+      * @param hostname The hostname that was used to connect to the server
+      * @param address The address the player used to connect, provided for timing issues
+      */
+-    public PlayerLoginEvent(final Player player, final String hostname, final InetAddress address) {
++    public PlayerLoginEvent(final Player player, final String hostname, final InetAddress address, final InetAddress realAddress) { // Spigot
+         super(player);
+         this.hostname = hostname;
+         this.address = address;
++        // Spigot start
++        this.realAddress = address;
++    }
++
++    public PlayerLoginEvent(final Player player, final String hostname, final InetAddress address) {
++        this(player, hostname, address, address);
++        // Spigot end
+     }
+ 
+     /**
+@@ -49,7 +57,7 @@ public class PlayerLoginEvent extends PlayerEvent {
+      */
+     @Deprecated
+     public PlayerLoginEvent(final Player player, final Result result, final String message) {
+-        this(player, "", null, result, message);
++        this(player, "", null, result, message, null); // Spigot
+     }
+ 
+     /**
+@@ -61,12 +69,23 @@ public class PlayerLoginEvent extends PlayerEvent {
+      * @param result The result status for this event
+      * @param message The message to be displayed if result denies login
+      */
+-    public PlayerLoginEvent(final Player player, String hostname, final InetAddress address, final Result result, final String message) {
+-        this(player, hostname, address);
++    public PlayerLoginEvent(final Player player, String hostname, final InetAddress address, final Result result, final String message, final InetAddress realAddress) { // Spigot
++        this(player, hostname, address, realAddress); // Spigot
+         this.result = result;
+         this.message = message;
+     }
+ 
++    // Spigot start
++    /**
++     * Gets the connection address of this player, regardless of whether it has been spoofed or not.
++     *
++     * @return the player's connection address
++     */
++    public InetAddress getRealAddress() {
++        return realAddress;
++    }
++    // Spigot end
++
+     /**
+      * Gets the current result of the login, as an enum
+      *
+-- 
+1.8.1.2
+
